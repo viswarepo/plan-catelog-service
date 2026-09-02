@@ -1,1 +1,1 @@
-# product-catalog-service
+# plan-catalog-service
