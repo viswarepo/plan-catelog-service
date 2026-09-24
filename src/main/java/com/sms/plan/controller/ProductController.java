@@ -42,16 +42,16 @@ public class ProductController {
         return mapper.toResponse(product);
     }
     @Operation(summary = "Update a product", description = "Registers a new top-level sellable offering. productCode must be unique within the organization.")
-    @PatchMapping("/update/{id}")
+    @PutMapping("/{id}/update")
     @ResponseStatus(HttpStatus.CREATED)
-    public void updateProduct(
+    public ProductResponse updateProduct(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody ProductDtos.CreateProductRequest request) {
 
-        catalogService.updateProduct(
+        Product product= catalogService.updateProduct(
                 id,organizationId, request);
-        //return mapper.toResponse(product);
+        return mapper.toResponse(product);
     }
 
 

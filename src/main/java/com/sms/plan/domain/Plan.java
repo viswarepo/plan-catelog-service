@@ -3,6 +3,7 @@ package com.sms.plan.domain;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,8 +30,8 @@ import java.util.List;
 public class Plan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false)
     private String organizationId;
@@ -54,17 +55,17 @@ public class Plan {
     @Column(nullable = false)
     private PlanStatus status = PlanStatus.DRAFT;
 
-    private Instant effectiveFrom;
+    private LocalDate effectiveFrom;
 
-    private Instant effectiveTo;
+    private LocalDate effectiveTo;
 
     @Column(nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    private LocalDate createdAt = LocalDate.now();
 
-    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<PricePoint> pricePoints = new ArrayList<>();
 
-    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<PlanEntitlement> entitlements = new ArrayList<>();
 
     protected Plan() {
@@ -79,7 +80,7 @@ public class Plan {
         this.description = description;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
@@ -127,23 +128,23 @@ public class Plan {
         this.status = status;
     }
 
-    public Instant getEffectiveFrom() {
+    public LocalDate getEffectiveFrom() {
         return effectiveFrom;
     }
 
-    public void setEffectiveFrom(Instant effectiveFrom) {
+    public void setEffectiveFrom(LocalDate effectiveFrom) {
         this.effectiveFrom = effectiveFrom;
     }
 
-    public Instant getEffectiveTo() {
+    public LocalDate getEffectiveTo() {
         return effectiveTo;
     }
 
-    public void setEffectiveTo(Instant effectiveTo) {
+    public void setEffectiveTo(LocalDate effectiveTo) {
         this.effectiveTo = effectiveTo;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDate getCreatedAt() {
         return createdAt;
     }
 

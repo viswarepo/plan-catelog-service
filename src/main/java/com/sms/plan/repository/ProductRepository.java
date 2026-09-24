@@ -8,9 +8,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, String> {
     Optional<Product> findByOrganizationIdAndProductCode(String organizationId, String productCode);
     boolean existsByOrganizationIdAndProductCode(String organizationId, String productCode);
-    List<Product> findByOrganizationId(String organizationId);
+    Optional<List<Product>> findByOrganizationId(String organizationId);
 
 }

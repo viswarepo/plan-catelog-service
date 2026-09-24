@@ -24,10 +24,10 @@ import java.util.List;
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -66,14 +66,14 @@ public class Product {
         this.description = description;
     }
 
-    public Product(Long id, boolean active, String name, String description) {
+    public Product(String id, boolean active, String name, String description) {
         this.name = name;
         this.description = description;
         this.active = active;
         this.id = id;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

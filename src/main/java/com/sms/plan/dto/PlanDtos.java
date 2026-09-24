@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 public final class PlanDtos {
@@ -36,6 +37,9 @@ public final class PlanDtos {
             @NotBlank String planCode,
             @NotBlank String name,
             String description,
+            String productCode,
+            LocalDate effectiveFrom,
+            LocalDate effectiveTo,
             @NotEmpty @Valid List<PricePointRequest> pricePoints,
             @Valid List<EntitlementRequest> entitlements
     ) {
@@ -57,17 +61,18 @@ public final class PlanDtos {
     }
 
     public record PlanResponse(
+            String planId,
             String organizationId,
             String productCode,
             String planCode,
             int version,
             String name,
             String description,
-            PlanStatus status
-            //Instant effectiveFrom,
-            //Instant effectiveTo
-            //List<PricePointResponse> pricePoints,
-            //List<EntitlementResponse> entitlements
+            PlanStatus status,
+            LocalDate effectiveFrom,
+            LocalDate effectiveTo,
+            List<PricePointResponse> pricePoints,
+            List<EntitlementResponse> entitlements
     ) {
 
     }

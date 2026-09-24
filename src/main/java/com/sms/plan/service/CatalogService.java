@@ -3,18 +3,24 @@ package com.sms.plan.service;
 import com.sms.plan.domain.*;
 import com.sms.plan.dto.PlanDtos;
 import com.sms.plan.dto.ProductDtos;
+import com.sms.plan.event.PlanCreatedEvent;
+import com.sms.plan.event.PlanEventPublisher;
 import com.sms.plan.exception.ConflictException;
 import com.sms.plan.exception.InvalidPlanStateException;
 import com.sms.plan.exception.ResourceNotFoundException;
 import com.sms.plan.repository.FeatureRepository;
 import com.sms.plan.repository.PlanRepository;
+import com.sms.plan.repository.PricePointRepository;
 import com.sms.plan.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -23,13 +29,16 @@ public class CatalogService {
     private final ProductRepository productRepository;
     private final PlanRepository planRepository;
     private final FeatureRepository featureRepository;
-
+    private final PricePointRepository pricePointRepository;
+    private final PlanEventPublisher planEventPublisher;
     public CatalogService(ProductRepository productRepository,
-                           PlanRepository planRepository,
-                           FeatureRepository featureRepository) {
+                          PlanRepository planRepository,
+                          FeatureRepository featureRepository, PricePointRepository pricePointRepository, PlanEventPublisher planEventPublisher) {
         this.productRepository = productRepository;
         this.planRepository = planRepository;
         this.featureRepository = featureRepository;
+        this.pricePointRepository = pricePointRepository;
+        this.planEventPublisher = planEventPublisher;
     }
 
     // ---------------------------------------------------------------- Products
@@ -41,7 +50,7 @@ public class CatalogService {
         Product product = new Product(organizationId, productCode, name, description);
         return productRepository.save(product);
     }
-    public void  updateProduct(Long id, String orgId, ProductDtos.CreateProductRequest request) {
+    public Product updateProduct(String id, String orgId, ProductDtos.CreateProductRequest request) {
         Product product = findProductOrThrow(id);
         product.setOrganizationId(orgId);
         product.setId(id);
@@ -53,7 +62,7 @@ public class CatalogService {
         }
         product.setActive(request.active());
 
-        productRepository.save(product);
+        return productRepository.save(product);
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +73,7 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public List<Product> listProducts(String organizationId) {
-        return productRepository.findByOrganizationId(organizationId);
+        return productRepository.findByOrganizationId(organizationId).orElseThrow(() -> new ResourceNotFoundException("Products not found: "));
     }
 
     // ---------------------------------------------------------------- Features
@@ -154,11 +163,22 @@ public class CatalogService {
         planRepository.findByOrganizationIdAndPlanCodeAndStatus(organizationId, planCode, PlanStatus.ACTIVE)
                 .ifPresent(currentlyActive -> {
                     currentlyActive.setStatus(PlanStatus.DEPRECATED);
-                    currentlyActive.setEffectiveTo(Instant.now());
+                    currentlyActive.setEffectiveTo(LocalDate.now());
                 });
 
         plan.setStatus(PlanStatus.ACTIVE);
-        plan.setEffectiveFrom(Instant.now());
+        plan.setEffectiveFrom(LocalDate.now());
+
+        PricePoint pricePoint = pricePointRepository.findByPlanId(plan.getId());
+        PlanCreatedEvent event = PlanCreatedEvent.of(
+                plan.getId(),
+                plan.getOrganizationId(),
+                plan.getProduct().getId(),
+                plan.getName(),
+                pricePoint.getCurrency().name(),
+                pricePoint.getBillingCycle().name(),
+                pricePoint.getAmount());
+        planEventPublisher.publishPlanCreated(event);
         return plan;
     }
 
@@ -167,7 +187,7 @@ public class CatalogService {
         Plan plan = getPlanVersion(organizationId, planCode, version);
         validateTransition(plan.getStatus(), PlanStatus.DEPRECATED);
         plan.setStatus(PlanStatus.DEPRECATED);
-        plan.setEffectiveTo(Instant.now());
+        plan.setEffectiveTo(LocalDate.now());
         return plan;
     }
 
@@ -203,7 +223,26 @@ public class CatalogService {
 
 
     public List<PlanDtos.PlanResponse> getPlans(String organizationId) {
-        List<Plan> plans = planRepository.findPlanByOrganizationId(organizationId);
+        List<Plan> plans = planRepository.findPlanByOrganizationId(organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Plans not found: "));
+
+        /*if (plans.isEmpty()) {
+            throw new PlanNotFoundException(organizationId, productCode);
+        }
+*/
+        return plans.stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public PlanDtos.PlanResponse getPlansByPlanId(String id,String organizationId) {
+        Plan plans = planRepository.findPlanByIdAndOrganizationId(id,organizationId);
+
+        return toResponse(plans);
+    }
+
+    public List<PlanDtos.PlanResponse> getPlansByProduct(String organizationId, String productCode) {
+        List<Plan> plans = planRepository.findPlanByOrganizationIdAndProduct(organizationId, productCode);
 
         /*if (plans.isEmpty()) {
             throw new PlanNotFoundException(organizationId, productCode);
@@ -216,18 +255,26 @@ public class CatalogService {
 
     private PlanDtos.PlanResponse toResponse(Plan plan) {
         return new PlanDtos.PlanResponse(
+                plan.getId(),
                 plan.getOrganizationId(),
                 plan.getProduct().getProductCode(),
                 plan.getPlanCode(),
                 plan.getVersion(),
                 plan.getName(),
                 plan.getDescription(),
-                plan.getStatus()
-
+                plan.getStatus(),
+                plan.getEffectiveFrom(),
+                plan.getEffectiveTo(),
+                plan.getPricePoints().stream()
+                        .map(pp -> new PlanDtos.PricePointResponse(pp.getCurrency(), pp.getBillingCycle(),pp.getAmount(),pp.getTrialDays()))
+                        .toList(),
+                plan.getEntitlements().stream()
+                        .map(ent -> new PlanDtos.EntitlementResponse(ent.getFeature().getCode(), ent.getFeature().getName(),ent.getValue()))
+                        .toList()
         );
     }
 
-    private Product findProductOrThrow(Long id) {
+    private Product findProductOrThrow(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }

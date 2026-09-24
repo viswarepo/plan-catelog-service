@@ -14,15 +14,18 @@ public final class FeatureDtos {
             @NotBlank String name,
             String description,
             @NotNull FeatureType type
+            //@NotNull FeatureStatus status
     ) {
     }
 
     public record FeatureResponse(
+            String featureId,
             String organizationId,
             String code,
             String name,
             String description,
             FeatureType type
+            //FeatureStatus status
     ) {
     }
 }

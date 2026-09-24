@@ -2,6 +2,7 @@ package com.sms.plan.controller;
 
 import com.sms.plan.domain.*;
 import com.sms.plan.dto.FeatureDtos.FeatureResponse;
+import com.sms.plan.dto.PlanDtos;
 import com.sms.plan.dto.PlanDtos.EntitlementResponse;
 import com.sms.plan.dto.PlanDtos.PlanResponse;
 import com.sms.plan.dto.PlanDtos.PricePointResponse;
@@ -34,17 +35,22 @@ public class CatalogMapper {
                 .toList();
 
         return new PlanResponse(
+                plan.getId(),
                 plan.getOrganizationId(),
                 plan.getProduct().getProductCode(),
                 plan.getPlanCode(),
                 plan.getVersion(),
                 plan.getName(),
                 plan.getDescription(),
-                plan.getStatus()
-                //plan.getEffectiveFrom(),
-                //plan.getEffectiveTo(),
-                //plan.getPricePoints(),
-                //plan.getEntitlements()
+                plan.getStatus(),
+                plan.getEffectiveFrom(),
+                plan.getEffectiveTo(),
+                plan.getPricePoints().stream()
+                        .map(pp -> new PlanDtos.PricePointResponse(pp.getCurrency(), pp.getBillingCycle(),pp.getAmount(),pp.getTrialDays()))
+                        .toList(),
+                plan.getEntitlements().stream()
+                        .map(ent -> new PlanDtos.EntitlementResponse(ent.getFeature().getCode(), ent.getFeature().getName(),ent.getValue()))
+                        .toList()
         );
     }
 
@@ -67,6 +73,7 @@ public class CatalogMapper {
 
     public FeatureResponse toResponse(Feature feature) {
         return new FeatureResponse(
+                feature.getId(),
                 feature.getOrganizationId(),
                 feature.getCode(),
                 feature.getName(),

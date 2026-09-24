@@ -27,7 +27,7 @@ public class FeatureController {
     }
 
     @Operation(summary = "Define a feature", description = "Creates a reusable BOOLEAN, NUMERIC, or TIERED capability that plans can grant via entitlements. code must be unique within the organization.")
-    @PostMapping
+    @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public FeatureResponse createFeature(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
@@ -37,8 +37,18 @@ public class FeatureController {
         return mapper.toResponse(feature);
     }
 
+    @PostMapping("/add")
+    @ResponseStatus(HttpStatus.CREATED)
+    public FeatureResponse addNewFeature(
+            @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
+            @Valid @RequestBody CreateFeatureRequest request) {
+        Feature feature = catalogService.createFeature(
+                organizationId, request.code(), request.name(), request.description(), request.type());
+        return mapper.toResponse(feature);
+    }
+
     @Operation(summary = "List all features in the organization")
-    @GetMapping
+    @GetMapping("/list")
     public List<FeatureResponse> listFeatures(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId) {
         return catalogService.listFeatures(organizationId).stream().map(mapper::toResponse).toList();

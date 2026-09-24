@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface PlanRepository extends JpaRepository<Plan, Long> {
+public interface PlanRepository extends JpaRepository<Plan, String> {
 
     List<Plan> findByOrganizationIdAndPlanCodeOrderByVersionDesc(String organizationId, String planCode);
 
@@ -27,5 +27,17 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
         JOIN p.product pr
         WHERE pr.organizationId = :organizationId
     """)
-    List<Plan> findPlanByOrganizationId(@Param("organizationId") String organizationId);
+    Optional<List<Plan>> findPlanByOrganizationId(@Param("organizationId") String organizationId);
+
+    @Query("""
+        SELECT p FROM Plan p
+        JOIN p.product pr
+        WHERE pr.organizationId = :organizationId and p.id=:id
+    """)
+    Plan findPlanByIdAndOrganizationId(@Param("id") String id,@Param("organizationId") String organizationId);
+
+    @Query("SELECT p FROM Plan p " +
+            "WHERE p.organizationId = :organizationId " +
+            "AND p.product.productCode = :productCode")
+    List<Plan> findPlanByOrganizationIdAndProduct(@Param("organizationId") String organizationId,@Param("productCode") String productCode);
 }

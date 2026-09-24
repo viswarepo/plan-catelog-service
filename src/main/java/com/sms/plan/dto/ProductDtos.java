@@ -17,7 +17,7 @@ public final class ProductDtos {
     }
 
     public record UpdateProductRequest(
-            @NotBlank Long id,
+            @NotBlank String id,
             String name,
             String description,
             boolean active
@@ -25,7 +25,7 @@ public final class ProductDtos {
     }
 
     public record ProductResponse(
-            Long id,
+            String productId,
             String organizationId,
             String productCode,
             String name,

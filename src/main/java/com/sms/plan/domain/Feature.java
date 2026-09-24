@@ -16,8 +16,8 @@ import jakarta.persistence.*;
 public class Feature {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false)
     private String organizationId;
@@ -34,6 +34,9 @@ public class Feature {
     @Column(nullable = false)
     private FeatureType type;
 
+    //@Enumerated(EnumType.STRING)
+    //private FeatureStatus status = FeatureStatus.ACTIVE; // default
+
     protected Feature() {
         // JPA
     }
@@ -46,7 +49,7 @@ public class Feature {
         this.type = type;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

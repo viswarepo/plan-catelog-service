@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/v1/plans")
 @Tag(name = "Plans", description = "Versioned pricing/feature bundles and their DRAFT -> ACTIVE -> DEPRECATED -> RETIRED lifecycle")
 public class PlanController {
 
@@ -36,11 +37,11 @@ public class PlanController {
             summary = "Create a draft plan version",
             description = "Creates version 1 of a new plan, or the next version of an existing planCode "
                     + "within this organization, always in DRAFT status. Must include at least one price point.")
-    @PostMapping("/api/v1/products/{productCode}/plans")
+    @PostMapping("/create/draft")
     @ResponseStatus(HttpStatus.CREATED)
     public PlanResponse createDraftPlan(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
-            @PathVariable String productCode,
+            //@PathVariable String productCode,
             @Valid @RequestBody CreatePlanRequest request) {
         List<PricePoint> pricePoints = request.pricePoints().stream()
                 .map(this::toPricePoint)
@@ -51,14 +52,14 @@ public class PlanController {
                 : request.entitlements().stream().map(r -> toEntitlement(organizationId, r)).toList();
 
         Plan plan = catalogService.createDraftPlan(
-                organizationId, productCode, request.planCode(), request.name(), request.description(),
+                organizationId, request.productCode(), request.planCode(), request.name(), request.description(),
                 pricePoints, entitlements);
 
         return mapper.toResponse(plan);
     }
 
     @Operation(summary = "List every version of a plan", description = "Returns all versions of planCode within this organization regardless of status, newest first.")
-    @GetMapping("/api/v1/plans/{planCode}/versions")
+    @GetMapping("/{planCode}/versions")
     public List<PlanResponse> getPlanVersions(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
             @Parameter(example = "PRO") @PathVariable String planCode) {
@@ -66,7 +67,7 @@ public class PlanController {
     }
 
     @Operation(summary = "Get one plan version")
-    @GetMapping("/api/v1/plans/{planCode}/versions/{version}")
+    @GetMapping("/{planCode}/versions/{version}")
     public PlanResponse getPlanVersion(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
             @Parameter(example = "PRO") @PathVariable String planCode,
@@ -79,7 +80,7 @@ public class PlanController {
             description = "DRAFT -> ACTIVE. Requires at least one price point. If another version of the "
                     + "same planCode is currently ACTIVE, it is automatically moved to DEPRECATED so "
                     + "existing subscribers keep their original terms.")
-    @PostMapping("/api/v1/plans/{planCode}/versions/{version}/publish")
+    @PostMapping("/{planCode}/versions/{version}/publish")
     public PlanResponse publish(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
             @Parameter(example = "PRO") @PathVariable String planCode,
@@ -88,7 +89,7 @@ public class PlanController {
     }
 
     @Operation(summary = "Deprecate an active plan version", description = "ACTIVE -> DEPRECATED. Stops new sign-ups; existing subscribers are unaffected by this service.")
-    @PostMapping("/api/v1/plans/{planCode}/versions/{version}/deprecate")
+    @PostMapping("/{planCode}/versions/{version}/deprecate")
     public PlanResponse deprecate(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
             @Parameter(example = "PRO") @PathVariable String planCode,
@@ -97,7 +98,7 @@ public class PlanController {
     }
 
     @Operation(summary = "Retire a deprecated plan version", description = "DEPRECATED -> RETIRED. Use only once no subscribers remain on this version.")
-    @PostMapping("/api/v1/plans/{planCode}/versions/{version}/retire")
+    @PostMapping("/{planCode}/versions/{version}/retire")
     public PlanResponse retire(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
             @Parameter(example = "PRO") @PathVariable String planCode,
@@ -110,13 +111,27 @@ public class PlanController {
      * Requires X-Organization-Id header (set by the gateway based on the
      * authenticated caller's org).
      */
-    @GetMapping("/api/v1/plans")
+    @GetMapping("/all")
     public ResponseEntity<List<PlanResponse>> getPlans(
-            @RequestHeader("X-Organization-Id") String organizationId) {
-
+            @RequestHeader("X-Organization-Id") String organizationId){
         List<PlanResponse> plans = catalogService.getPlans(organizationId);
         return ResponseEntity.ok(plans);
     }
+
+    @GetMapping("/info/{id}")
+    public ResponseEntity<PlanResponse> getPlans(
+            @Parameter(example = "1") @PathVariable String id,
+            @RequestHeader("X-Organization-Id") String organizationId){
+        PlanResponse plans = catalogService.getPlansByPlanId(id, organizationId);
+        return ResponseEntity.ok(plans);
+    }
+
+    @GetMapping("/{productCode}")
+    public List<PlanResponse> getPlansByProduct(
+            @RequestHeader("X-Organization-Id") String organizationId,
+            @Parameter(example = "PROD") @PathVariable String productCode){
+        return catalogService.getPublicCatalogForProduct(organizationId, productCode).stream().map(mapper::toResponse).toList();
+     }
 
     private PricePoint toPricePoint(PricePointRequest r) {
         return new PricePoint(r.currency(), r.billingCycle(), r.amount(), r.trialDays());

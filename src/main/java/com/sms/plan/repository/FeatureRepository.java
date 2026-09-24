@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface FeatureRepository extends JpaRepository<Feature, Long> {
+public interface FeatureRepository extends JpaRepository<Feature, String> {
     Optional<Feature> findByOrganizationIdAndCode(String organizationId, String code);
     boolean existsByOrganizationIdAndCode(String organizationId, String code);
     List<Feature> findByOrganizationId(String organizationId);

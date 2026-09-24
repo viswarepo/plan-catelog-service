@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 /**
  * A single price for a Plan in one currency, at one billing cadence.
- * A plan typically has several PricePoints (e.g. USD/MONTHLY, USD/ANNUAL, EUR/MONTHLY...).
+ * A plan typically has several PricePoints (e.g. USD/MONTHLY, USD/YEARLY, EUR/MONTHLY...).
  */
 @Entity
 @Table(
@@ -16,8 +16,8 @@ import java.math.BigDecimal;
 public class PricePoint {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "plan_id", nullable = false)
@@ -48,7 +48,7 @@ public class PricePoint {
         this.trialDays = trialDays;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

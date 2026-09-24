@@ -3,7 +3,6 @@ package com.sms.plan.config;
 import com.sms.plan.domain.*;
 import com.sms.plan.service.CatalogService;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -61,7 +60,7 @@ public class DataSeeder {
                 org, "ACME_CLOUD", "PRO", "Pro", "For growing teams",
                 List.of(
                         new PricePoint(CurrencyCode.USD, BillingCycle.MONTHLY, new BigDecimal("29.00"), 14),
-                        new PricePoint(CurrencyCode.USD, BillingCycle.ANNUAL, new BigDecimal("290.00"), 14)
+                        new PricePoint(CurrencyCode.USD, BillingCycle.YEARLY, new BigDecimal("290.00"), 14)
                 ),
                 List.of(
                         new PlanEntitlement(apiAccess, "true"),
@@ -76,7 +75,7 @@ public class DataSeeder {
                 org, "ACME_CLOUD", "PRO", "Pro", "For growing teams (2026 pricing)",
                 List.of(
                         new PricePoint(CurrencyCode.USD, BillingCycle.MONTHLY, new BigDecimal("35.00"), 14),
-                        new PricePoint(CurrencyCode.USD, BillingCycle.ANNUAL, new BigDecimal("350.00"), 14)
+                        new PricePoint(CurrencyCode.USD, BillingCycle.YEARLY, new BigDecimal("350.00"), 14)
                 ),
                 List.of(
                         new PlanEntitlement(apiAccess, "true"),
@@ -91,7 +90,7 @@ public class DataSeeder {
         // ---- ENTERPRISE plan (v1), left as DRAFT (not yet ready to sell) ----
         catalogService.createDraftPlan(
                 org, "ACME_CLOUD", "ENTERPRISE", "Enterprise", "Custom limits and SLAs",
-                List.of(new PricePoint(CurrencyCode.USD, BillingCycle.ANNUAL, new BigDecimal("12000.00"), 30)),
+                List.of(new PricePoint(CurrencyCode.USD, BillingCycle.YEARLY, new BigDecimal("12000.00"), 30)),
                 List.of(
                         new PlanEntitlement(apiAccess, "true"),
                         new PlanEntitlement(maxSeats, "-1"),
@@ -113,7 +112,7 @@ public class DataSeeder {
 
         Plan standard = catalogService.createDraftPlan(
                 org, "GLOBEX_SUITE", "STANDARD", "Standard", "The default Globex Suite tier",
-                List.of(new PricePoint(CurrencyCode.EUR, BillingCycle.ANNUAL, new BigDecimal("240.00"), 0)),
+                List.of(new PricePoint(CurrencyCode.EUR, BillingCycle.YEARLY, new BigDecimal("240.00"), 0)),
                 List.of(new PlanEntitlement(exportFeature, "true")));
         catalogService.publishPlan(org, standard.getPlanCode(), standard.getVersion());
     }

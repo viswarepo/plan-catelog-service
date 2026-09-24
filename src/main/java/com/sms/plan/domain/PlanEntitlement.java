@@ -15,8 +15,8 @@ import jakarta.persistence.*;
 public class PlanEntitlement {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "plan_id", nullable = false)
@@ -39,7 +39,7 @@ public class PlanEntitlement {
         this.value = value;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
