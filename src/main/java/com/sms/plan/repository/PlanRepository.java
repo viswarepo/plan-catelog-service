@@ -17,7 +17,9 @@ public interface PlanRepository extends JpaRepository<Plan, String> {
 
     Optional<Plan> findByOrganizationIdAndPlanCodeAndStatus(String organizationId, String planCode, PlanStatus status);
 
-    List<Plan> findByOrganizationIdAndStatus(String organizationId, PlanStatus status);
+    List<Plan> findByOrganizationIdAndStatusAndHolder(String organizationId, PlanStatus status, String holder);
+
+    List<Plan> findByStatusAndHolder(PlanStatus status, String holder);
 
     List<Plan> findByOrganizationIdAndProduct_ProductCodeAndStatus(
             String organizationId, String productCode, PlanStatus status);
@@ -25,9 +27,9 @@ public interface PlanRepository extends JpaRepository<Plan, String> {
     @Query("""
         SELECT p FROM Plan p
         JOIN p.product pr
-        WHERE pr.organizationId = :organizationId
+        WHERE pr.organizationId = :organizationId and p.holder=:holder
     """)
-    Optional<List<Plan>> findPlanByOrganizationId(@Param("organizationId") String organizationId);
+    List<Plan> findPlanByOrganizationId(@Param("organizationId") String organizationId,@Param("holder") String holder);
 
     @Query("""
         SELECT p FROM Plan p
@@ -40,4 +42,6 @@ public interface PlanRepository extends JpaRepository<Plan, String> {
             "WHERE p.organizationId = :organizationId " +
             "AND p.product.productCode = :productCode")
     List<Plan> findPlanByOrganizationIdAndProduct(@Param("organizationId") String organizationId,@Param("productCode") String productCode);
+
+    Plan findPlanById(String id);
 }

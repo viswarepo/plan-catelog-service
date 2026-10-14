@@ -40,6 +40,8 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    private String holder;
+
     private String description;
 
     @Column(nullable = false)
@@ -59,15 +61,17 @@ public class Product {
         this.organizationId = organizationId;
     }
 
-    public Product(String organizationId, String productCode, String name, String description) {
+    public Product(String organizationId, String productCode, String name, String holder,String description) {
         this.organizationId = organizationId;
         this.productCode = productCode;
         this.name = name;
+        this.holder = holder;
         this.description = description;
     }
 
-    public Product(String id, boolean active, String name, String description) {
+    public Product(String id, boolean active, String name, String holder,String description) {
         this.name = name;
+        this.holder = holder;
         this.description = description;
         this.active = active;
         this.id = id;
@@ -95,6 +99,14 @@ public class Product {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getHolder() {
+        return holder;
+    }
+
+    public void setHolder(String holder) {
+        this.holder = holder;
     }
 
     public String getDescription() {
