@@ -31,14 +31,14 @@ public class ProductController {
     }
 
     @Operation(summary = "Create a product", description = "Registers a new top-level sellable offering. productCode must be unique within the organization.")
-    @PostMapping("/create")
+    @PostMapping("/create/{holder}")
     @ResponseStatus(HttpStatus.CREATED)
     public ProductResponse createProduct(
             @Parameter(description = "Tenant identifier", required = true, example = "org_acme")
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
             @Valid @RequestBody CreateProductRequest request) {
         Product product = catalogService.createProduct(
-                organizationId, request.productCode(), request.name(), request.description());
+                organizationId, request.productCode(), request.name(), request.holder(),request.description());
         return mapper.toResponse(product);
     }
     @Operation(summary = "Update a product", description = "Registers a new top-level sellable offering. productCode must be unique within the organization.")
@@ -56,10 +56,11 @@ public class ProductController {
 
 
     @Operation(summary = "List all products in the organization")
-    @GetMapping("/all")
+    @GetMapping("/all/{holder}")
     public List<ProductResponse> listProducts(
-            @RequestHeader("X-Organization-Id") @NotBlank String organizationId) {
-        return catalogService.listProducts(organizationId).stream().map(mapper::toResponse).toList();
+            @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
+            @PathVariable String holder) {
+        return catalogService.listProducts(organizationId,holder).stream().map(mapper::toResponse).toList();
     }
 
     @Operation(summary = "Get a product by its code")

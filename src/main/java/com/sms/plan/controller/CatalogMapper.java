@@ -20,6 +20,7 @@ public class CatalogMapper {
                 product.getOrganizationId(),
                 product.getProductCode(),
                 product.getName(),
+                product.getHolder(),
                 product.getDescription(),
                 product.isActive()
         );
@@ -41,6 +42,7 @@ public class CatalogMapper {
                 plan.getPlanCode(),
                 plan.getVersion(),
                 plan.getName(),
+                plan.getHolder(),
                 plan.getDescription(),
                 plan.getStatus(),
                 plan.getEffectiveFrom(),

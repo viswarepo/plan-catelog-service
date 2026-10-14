@@ -3,9 +3,11 @@ package com.sms.plan.controller;
 import com.sms.plan.service.CatalogService;
 import com.sms.plan.dto.PlanDtos.PlanResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,9 +31,10 @@ public class CatalogController {
     }
 
     @Operation(summary = "Get the public catalog", description = "Returns every ACTIVE plan version for this organization across all of its products — the sellable price list.")
-    @GetMapping("/api/v1/catalog")
+    @GetMapping("/api/v1/catalog/{userRole}")
     public List<PlanResponse> getCatalog(
-            @RequestHeader("X-Organization-Id") @NotBlank String organizationId) {
-        return catalogService.getPublicCatalog(organizationId).stream().map(mapper::toResponse).toList();
+            @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
+            @Parameter(example = "PRO") @PathVariable String userRole) {
+        return catalogService.getPublicCatalog(organizationId,userRole).stream().map(mapper::toResponse).toList();
     }
 }

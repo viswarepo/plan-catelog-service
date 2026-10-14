@@ -37,11 +37,11 @@ public class PlanController {
             summary = "Create a draft plan version",
             description = "Creates version 1 of a new plan, or the next version of an existing planCode "
                     + "within this organization, always in DRAFT status. Must include at least one price point.")
-    @PostMapping("/create/draft")
+    @PostMapping("/create/draft/{userRole}")
     @ResponseStatus(HttpStatus.CREATED)
     public PlanResponse createDraftPlan(
             @RequestHeader("X-Organization-Id") @NotBlank String organizationId,
-            //@PathVariable String productCode,
+            @PathVariable String userRole,
             @Valid @RequestBody CreatePlanRequest request) {
         List<PricePoint> pricePoints = request.pricePoints().stream()
                 .map(this::toPricePoint)
@@ -50,9 +50,16 @@ public class PlanController {
         List<PlanEntitlement> entitlements = request.entitlements() == null
                 ? List.of()
                 : request.entitlements().stream().map(r -> toEntitlement(organizationId, r)).toList();
+        String holder =null;
+        if(userRole.equals("ROLE_OWNER")){
+            holder="OWNER";
+        }
+        if(userRole.equals("ROLE_ADMIN")){
+            holder="TENANT";
+        }
 
         Plan plan = catalogService.createDraftPlan(
-                organizationId, request.productCode(), request.planCode(), request.name(), request.description(),
+                organizationId, request.productCode(), request.planCode(), holder,request.name(), request.description(),
                 pricePoints, entitlements);
 
         return mapper.toResponse(plan);
@@ -111,10 +118,11 @@ public class PlanController {
      * Requires X-Organization-Id header (set by the gateway based on the
      * authenticated caller's org).
      */
-    @GetMapping("/all")
-    public ResponseEntity<List<PlanResponse>> getPlans(
-            @RequestHeader("X-Organization-Id") String organizationId){
-        List<PlanResponse> plans = catalogService.getPlans(organizationId);
+    @GetMapping("/all/{userRole}")
+    public ResponseEntity<List<PlanResponse>> getAllPlans(
+            @RequestHeader("X-Organization-Id") String organizationId,
+            @Parameter(example = "PRO") @PathVariable String userRole){
+        List<PlanResponse> plans = catalogService.getPlans(organizationId, userRole);
         return ResponseEntity.ok(plans);
     }
 
@@ -122,7 +130,7 @@ public class PlanController {
     public ResponseEntity<PlanResponse> getPlans(
             @Parameter(example = "1") @PathVariable String id,
             @RequestHeader("X-Organization-Id") String organizationId){
-        PlanResponse plans = catalogService.getPlansByPlanId(id, organizationId);
+        PlanResponse plans = catalogService.getPlansByPlanId(id);
         return ResponseEntity.ok(plans);
     }
 

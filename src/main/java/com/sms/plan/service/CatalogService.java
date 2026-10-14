@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,11 +44,11 @@ public class CatalogService {
 
     // ---------------------------------------------------------------- Products
 
-    public Product createProduct(String organizationId, String productCode, String name, String description) {
+    public Product createProduct(String organizationId, String productCode, String name, String holder,String description) {
         if (productRepository.existsByOrganizationIdAndProductCode(organizationId, productCode)) {
             throw new ConflictException("Product already exists in this organization: " + productCode);
         }
-        Product product = new Product(organizationId, productCode, name, description);
+        Product product = new Product(organizationId, productCode, name, holder,description);
         return productRepository.save(product);
     }
     public Product updateProduct(String id, String orgId, ProductDtos.CreateProductRequest request) {
@@ -59,6 +60,9 @@ public class CatalogService {
         }
         if (StringUtils.hasText(request.description())) {
             product.setDescription(request.description());
+        }
+        if (StringUtils.hasText(request.holder())) {
+            product.setHolder(request.holder());
         }
         product.setActive(request.active());
 
@@ -72,8 +76,14 @@ public class CatalogService {
     }
 
     @Transactional(readOnly = true)
-    public List<Product> listProducts(String organizationId) {
-        return productRepository.findByOrganizationId(organizationId).orElseThrow(() -> new ResourceNotFoundException("Products not found: "));
+    public List<Product> listProducts(String organizationId, String holder) {
+        if(holder.equals("ROLE_OWNER")){
+            return productRepository.findByOrganizationIdAndHolder(organizationId, "OWNER");
+        }else if(holder.equals("ROLE_ADMIN")){
+            return productRepository.findByOrganizationIdAndHolder(organizationId, "TENANT");
+        }else{
+            throw new IllegalArgumentException("Invalid holder or missing clientOrgId");
+        }
     }
 
     // ---------------------------------------------------------------- Features
@@ -97,7 +107,7 @@ public class CatalogService {
      * in this organization, the new version number is the latest + 1; otherwise
      * it starts at 1.
      */
-    public Plan createDraftPlan(String organizationId, String productCode, String planCode, String name, String description,
+    public Plan createDraftPlan(String organizationId, String productCode, String planCode, String holder,String name, String description,
                                  List<PricePoint> pricePoints, List<PlanEntitlement> entitlements) {
         Product product = getProduct(organizationId, productCode);
 
@@ -106,7 +116,7 @@ public class CatalogService {
                 .map(p -> p.getVersion() + 1)
                 .orElse(1);
 
-        Plan plan = new Plan(organizationId, planCode, nextVersion, name, description);
+        Plan plan = new Plan(organizationId, planCode, nextVersion, name, holder,description);
         product.addPlan(plan);
 
         for (PricePoint pp : pricePoints) {
@@ -136,8 +146,14 @@ public class CatalogService {
     }
 
     @Transactional(readOnly = true)
-    public List<Plan> getPublicCatalog(String organizationId) {
-        return planRepository.findByOrganizationIdAndStatus(organizationId, PlanStatus.ACTIVE);
+    public List<Plan> getPublicCatalog(String organizationId, String userRole) {
+        if(userRole.equals("ROLE_CUSTOMER")) {
+            return planRepository.findByStatusAndHolder(PlanStatus.ACTIVE,"TENANT");
+        }else if(userRole.equals("ROLE_ADMIN_SUPER")){
+            return planRepository.findByStatusAndHolder(PlanStatus.ACTIVE,"OWNER");
+        }else {
+            throw new IllegalArgumentException("Invalid holder or missing clientOrgId");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -222,21 +238,30 @@ public class CatalogService {
     }
 
 
-    public List<PlanDtos.PlanResponse> getPlans(String organizationId) {
-        List<Plan> plans = planRepository.findPlanByOrganizationId(organizationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Plans not found: "));
+    public List<PlanDtos.PlanResponse> getPlans(String organizationId,String userRole) {
+        List<Plan> plans = new ArrayList<Plan>() ;
+
+        if(userRole.equals("ROLE_OWNER")){
+            plans= planRepository.findPlanByOrganizationId(organizationId, "OWNER");
+        }else if(userRole.equals("ROLE_ADMIN")){
+            plans= planRepository.findPlanByOrganizationId(organizationId, "TENANT");
+        }else{
+            throw new IllegalArgumentException("Invalid holder or missing clientOrgId");
+        }
+        //List<Plan> plans = planRepository.findPlanByOrganizationIdAndHolder(organizationId, )
+                //.orElseThrow(() -> new ResourceNotFoundException("Plans not found: "));
 
         /*if (plans.isEmpty()) {
             throw new PlanNotFoundException(organizationId, productCode);
-        }
-*/
+        }*/
+
         return plans.stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-    public PlanDtos.PlanResponse getPlansByPlanId(String id,String organizationId) {
-        Plan plans = planRepository.findPlanByIdAndOrganizationId(id,organizationId);
+    public PlanDtos.PlanResponse getPlansByPlanId(String id) {
+        Plan plans = planRepository.findPlanById(id);
 
         return toResponse(plans);
     }
@@ -261,6 +286,7 @@ public class CatalogService {
                 plan.getPlanCode(),
                 plan.getVersion(),
                 plan.getName(),
+                plan.getHolder(),
                 plan.getDescription(),
                 plan.getStatus(),
                 plan.getEffectiveFrom(),
