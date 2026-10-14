@@ -16,7 +16,7 @@ import java.util.List;
 //@Configuration
 public class DataSeeder {
 
-    @org.springframework.context.annotation.Bean
+    /*@org.springframework.context.annotation.Bean
     public CommandLineRunner seed(CatalogService catalogService) {
         return args -> {
 
@@ -115,5 +115,5 @@ public class DataSeeder {
                 List.of(new PricePoint(CurrencyCode.EUR, BillingCycle.YEARLY, new BigDecimal("240.00"), 0)),
                 List.of(new PlanEntitlement(exportFeature, "true")));
         catalogService.publishPlan(org, standard.getPlanCode(), standard.getVersion());
-    }
+    }*/
 }

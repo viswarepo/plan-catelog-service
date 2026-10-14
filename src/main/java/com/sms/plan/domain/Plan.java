@@ -50,6 +50,7 @@ public class Plan {
     private String name;
 
     private String description;
+    private String holder;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -72,13 +73,15 @@ public class Plan {
         // JPA
     }
 
-    public Plan(String organizationId, String planCode, int version, String name, String description) {
+    public Plan(String organizationId, String planCode, int version, String name, String holder,String description) {
         this.organizationId = organizationId;
         this.planCode = planCode;
         this.version = version;
         this.name = name;
+        this.holder = holder;
         this.description = description;
     }
+
 
     public String getId() {
         return id;
@@ -110,6 +113,14 @@ public class Plan {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getHolder() {
+        return holder;
+    }
+
+    public void setHolder(String holder) {
+        this.holder = holder;
     }
 
     public String getDescription() {
